@@ -1,0 +1,469 @@
+<project name="openspcoop2-commons-testsuite-config">
+    <description>
+        Configurazione dei test
+    </description>
+
+	
+	<!-- estensione di ant (if .... ) -->
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+          <classpath>
+              <pathelement location="${required_lib}/ant/ant-contrib-1.0b3.jar"/>
+          </classpath>
+	</taskdef>
+	
+
+	<!-- Elenco variabili da fornire -->
+	<!--
+		
+		Target: preparazioneAmbienteDefault_engine
+		- tipoDatabase: tipo di database
+		invoca creazioneFileConfigurazioneDefault, impostazioneValoriAmbienteConfigurazione, preparazioneAmbienteCore
+		
+		Target: preparazioneAmbienteNewConnection_engine
+		- tipoDatabase: tipo di database
+		invoca creazioneFileConfigurazioneConnectionNew, impostazioneValoriAmbienteConfigurazione, preparazioneAmbienteCore
+		
+		Target: ripristinoAmbiente_engine
+		- tipoRegistroServizi: tipo di registro
+		- tipoConfigurazione : tipo di configurazione
+		
+		
+		interni:
+		
+		Target: creazioneFileConfigurazioneDefault e creazioneFileConfigurazioneConnectionNew
+		- build_testunits: directory di builg
+		- config_file: directory di configurazione
+		
+		Target: impostazioneValoriAmbienteConfigurazione
+		- build_testunits: directory di builg
+		- tipoDatabase: tipo di database
+		- as: versione application server
+		
+		Target: preparazioneAmbienteCore
+		- openspcoop2_testsuite: core della testsuite
+		- openspcoop_configuration_dir: configuration dir
+		- attachments_file: attachments files
+		- soap_file: soap files
+		- xml_encoding_file: xml encodings files
+		- openspcoop_configuration_dir_backup: directory di backup delle configurazioni
+		- config_file: directory di configurazione
+		- tipoRegistroServizi: tipo di registro
+		- proprietaRegistroServizi: proprieta' di accesso al registro
+		- resetRegistroServizi: reset del Registro
+		- tipoConfigurazione : tipo di configurazione
+		- proprietaConfigurazione : proprieta' di configurazione
+		- resetConfigurazione : reset della configurazione
+		- gestioneSezioneConfigurazione : indicazione se deve essere gestita anche la sezione della configurazione
+		
+	-->
+	
+	
+	
+	<!-- Prepara l'ambiente di test -->
+	<target name="preparazioneAmbienteDefault_engine">
+		<if>
+			<equals arg1="${tipoDatabase}" arg2="$${tipoDatabase}"/>
+			<then>
+				<fail message="Parametro tipoDatabase non fornito"/>
+			</then>
+		</if>
+		<if>
+			<not>
+				<available file="${openspcoop2}/core/deploy/sql/${tipoDatabase}" type="dir"/>
+			</not>
+			<then>
+				<fail message="TipoDatabase fornito non supportato"/>
+			</then>
+		</if>
+		<!-- Preparazione Ambiente -->
+		<antcall target="-creazioneFileConfigurazioneDefault"/>
+		<antcall target="-impostazioneValoriAmbienteConfigurazione"/>
+		<antcall target="-preparazioneAmbienteCore"/>
+	</target>
+	
+	<target name="preparazioneAmbienteNewConnection_engine">
+		<if>
+			<equals arg1="${tipoDatabase}" arg2="$${tipoDatabase}"/>
+			<then>
+				<fail message="Parametro tipoDatabase non fornito"/>
+			</then>
+		</if>
+		<if>
+			<not>
+				<available file="${openspcoop2}/core/deploy/sql/${tipoDatabase}" type="dir"/>
+			</not>
+			<then>
+				<fail message="TipoDatabase fornito non supportato"/>
+			</then>
+		</if>
+		<!-- Preparazione Ambiente -->
+		<antcall target="-creazioneFileConfigurazioneConnectionNew"/>
+		<antcall target="-impostazioneValoriAmbienteConfigurazione"/>
+		<antcall target="-preparazioneAmbienteCore"/>
+	</target>
+	
+	
+	<!-- Ripristino l'ambiente che vi era prima dell'esecuzione del test -->
+	<target name="ripristinoAmbiente_engine">
+
+		<!-- RegistroServizi -->
+		<if>
+			<equals arg1="${tipoRegistroServizi}" arg2="xml" />
+			<!-- xml -->
+			<then>
+				<move file="${openspcoop_configuration_dir_backup}/registroServizi.xml" todir="${openspcoop_configuration_dir}"/>
+			</then>
+		</if>
+
+		<!-- Configurazione -->
+		<if>
+			<equals arg1="${tipoConfigurazione}" arg2="xml" />
+			<!-- xml -->
+			<then>
+				<move file="${openspcoop_configuration_dir_backup}/config.xml" todir="${openspcoop_configuration_dir}"/>
+			</then>
+		</if>
+
+	</target>
+	
+	
+	
+	
+	
+	
+	
+	
+	<!--  ************* GESTIONE CONFIGURAZIONE ESEMPIO **************** -->
+
+	<!-- Creazione file di configurazione -->
+	<target name="-creazioneFileConfigurazioneDefault">
+		<delete file="${build_testunits}/config.xml"/>
+		<concat destfile="${build_testunits}/config.xml" append="yes">
+			<filelist dir="${config_file}"
+                           files="configurazioneSoggetti.xml configurazioneDefault.xml"/>
+		</concat>
+	</target>
+	<target name="-creazioneFileConfigurazioneConnectionNew">
+		<delete file="${build_testunits}/config.xml"/>
+		<concat destfile="${build_testunits}/config.xml" append="yes">
+			<filelist dir="${config_file}"
+                           files="configurazioneSoggetti.xml configurazioneNewConnectionForResponse.xml"/>
+		</concat>
+	</target>
+
+
+	
+	<!-- Prepara l'ambiente di test -->
+	<target name="-preparazioneAmbienteCore">
+
+		
+		
+		<!-- File per test -->
+		<mkdir dir="${openspcoop_configuration_dir}/testfiles" />
+		
+		<if>
+			<not>
+				<equals arg1="${attachments_file}" arg2="$${attachments_file}"/>
+			</not>
+			<then>
+				<available file="${attachments_file}" property="attachments_file.present"/>
+				<if>
+					<istrue value="${attachments_file.present}"/>
+					<then>
+						<copy todir="${openspcoop_configuration_dir}/testfiles">
+							<fileset dir="${attachments_file}"/>
+						</copy>
+					</then>
+				</if>	
+			</then>
+		</if>	
+
+		<if>
+			<not>
+				<equals arg1="${soap_file}" arg2="$${soap_file}"/>
+			</not>
+			<then>
+				<available file="${soap_file}" property="soap_file.present"/>
+				<if>
+					<istrue value="${soap_file.present}"/>
+					<then>
+						<copy todir="${openspcoop_configuration_dir}/testfiles">
+							<fileset dir="${soap_file}"/>
+						</copy>
+					</then>
+				</if>
+			</then>
+		</if>
+
+		<if>
+			<not>
+				<equals arg1="${xml_encoding_file}" arg2="$${xml_encoding_file}"/>
+			</not>
+			<then>
+				<available file="${xml_encoding_file}" property="xml_encoding_file.present"/>
+				<if>
+					<istrue value="${xml_encoding_file.present}"/>
+					<then>
+						<copy todir="${openspcoop_configuration_dir}/testfiles">
+							<fileset dir="${xml_encoding_file}"/>
+						</copy>
+					</then>
+				</if>
+			</then>
+		</if>
+		
+
+
+
+		<!-- RegistroServizi -->
+		<if>
+			<not>
+				<equals arg1="${tipoRegistroServizi}" arg2="none" />
+			</not>
+			<then>
+				<if>
+					<equals arg1="${tipoRegistroServizi}" arg2="xml" />
+					<!-- xml -->
+					<then>
+						<!-- File OLD di Backup della Configurazione -->
+						<buildnumber/>
+						<available file="${openspcoop_configuration_dir_backup}/registroServizi.xml" property="registroServizi.xml.present"/>
+						<if>
+							<equals arg1="${registroServizi.xml.present}" arg2="true" />
+							<then>
+								<move file="${openspcoop_configuration_dir_backup}/registroServizi.xml" 
+                                        tofile="${openspcoop_configuration_dir_backup}/registroServizi.xml.old.${build.number}"/>
+							</then>
+						</if>
+
+						<!-- Backup dei file di configurazione di OpenSPCoop -->
+						<available file="${openspcoop_configuration_dir}/registroServizi.xml" property="registroServizi_xml_originale.present"/>
+						<if>
+							<istrue value="${registroServizi_xml_originale.present}"/>
+							<then>
+								<copy file="${openspcoop_configuration_dir}/registroServizi.xml" todir="${openspcoop_configuration_dir_backup}"/>
+							</then>
+						</if>
+
+						<!-- nuovo Registro Servizi -->
+						<copy file="${config_file}/registroServizi.xml" 
+                              todir="${openspcoop_configuration_dir}" overwrite="true"/>
+					</then>
+					<!-- db/uddi/web -->
+					<else>
+						<!-- Se presenti configurazioni speciali che funzionano solo su xml -->
+						<replace file="${build_testunits}/config.xml" token="Start Configurazione valida solo per xml -->" value="Start Configurazione valida solo per xml"/>
+						<replace file="${build_testunits}/config.xml" token="&lt;!-- End Configurazione valida solo per xml" value="End Configurazione valida solo per xml"/>
+												
+						<java classname="org.openspcoop2.core.registry.driver.utils.TestXMLDataConverter" fork="true">
+							<arg value="${config_file}/registroServizi.xml" />
+							<arg value="${tipoRegistroServizi}" />
+							<arg value="${proprietaRegistroServizi}" />
+							<arg value="${resetRegistroServizi}" />
+							<arg value="insertUpdate" />
+							<arg value="true" /> <!-- gestioneSoggetti -->
+							<arg value="false" /> <!-- mantieniFruitori -->
+							<arg value="operativo" /> <!-- statoAccordiImportati -->
+							<arg value="${protocolloDefault}" /> <!-- protocolloDefault -->
+							<arg value="${openspcoop2_testsuite}/deploy/properties_xml2Backend/xml2backend.log4j2.properties"/>
+							<classpath>
+								<path refid="classpath_run"/>
+							</classpath>
+						</java>
+					</else>
+				</if>
+			</then>
+		</if>
+
+		<!-- Configurazione -->
+		<if>
+			<not>
+				<equals arg1="${tipoConfigurazione}" arg2="none" />
+			</not>
+			<then>
+				<if>
+					<equals arg1="${tipoConfigurazione}" arg2="xml" />
+					<!-- xml -->
+					<then>
+
+						<!-- File OLD di Backup della Configurazione -->
+						<buildnumber/>
+						<available file="${openspcoop_configuration_dir_backup}/config.xml" property="config.xml.present"/>
+						<if>
+							<equals arg1="${config.xml.present}" arg2="true" />
+							<then>
+								<move file="${openspcoop_configuration_dir_backup}/config.xml" 
+                                        tofile="${openspcoop_configuration_dir_backup}/config.xml.old.${build.number}"/>
+							</then>
+						</if>
+
+						<!-- Backup dei file di configurazione di OpenSPCoop -->
+						<available file="${openspcoop_configuration_dir}/config.xml" property="config_xml_originale.present"/>
+						<if>
+							<istrue value="${config_xml_originale.present}"/>
+							<then>
+								<copy file="${openspcoop_configuration_dir}/config.xml" todir="${openspcoop_configuration_dir_backup}"/>
+							</then>
+						</if>
+								
+						<!-- nuova configurazione-->
+						<copy file="${build_testunits}/config.xml" 
+                              todir="${openspcoop_configuration_dir}" overwrite="true"/>
+					</then>
+					<!-- db -->
+					<else>
+						<!-- Se presenti configurazioni speciali che funzionano solo su xml -->
+						<replace file="${build_testunits}/config.xml" token="Start Configurazione valida solo per xml -->" value="Start Configurazione valida solo per xml"/>
+						<replace file="${build_testunits}/config.xml" token="&lt;!-- End Configurazione valida solo per xml" value="End Configurazione valida solo per xml"/>	
+
+						<java classname="org.openspcoop2.core.config.driver.utils.TestXMLDataConverter" fork="true">
+							<arg value="${build_testunits}/config.xml" />
+							<arg value="${tipoConfigurazione}" />
+							<arg value="${proprietaConfigurazione}" />
+							<arg value="${resetConfigurazione}" />
+							<arg value="${gestioneSezioneConfigurazione}" />
+							<arg value="insertUpdate" />
+							<arg value="false" /> <!-- gestioneSoggetti -->
+							<arg value="${protocolloDefault}" /> <!-- protocolloDefault -->
+							<arg value="${openspcoop2_testsuite}/deploy/properties_xml2Backend/xml2backend.log4j2.properties"/>
+							<classpath>
+								<path refid="classpath_run"/>
+							</classpath>
+						</java>
+					</else>
+				</if>
+			</then>
+		</if>
+
+	</target>
+
+	
+
+
+	<target name="-impostazioneValoriAmbienteConfigurazione" >
+		
+		<replace file="${build_testunits}/config.xml" token="@TIPO_DATABASE@" value="${tipoDatabase}"/>
+		
+		<if>
+			<or>
+				<matches string="${as}" pattern="tomcat.*"/>
+				<equals arg1="${as}" arg2="jboss4"/>
+				<equals arg1="${as}" arg2="jboss5"/>
+				<equals arg1="${as}" arg2="jboss6"/>
+			</or>
+			<then>			
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- CONTEXT_JMS_FACTORY --&#62;"/>
+					<param name="value" value="&#60;property nome=&#34;context-java.naming.factory.initial&#34; valore=&#34;org.jnp.interfaces.NamingContextFactory&#34; /&#62;"/>
+				</antcall>
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- CONTEXT_JMS_PKGS --&#62;"/>
+					<param name="value" value="&#60;property nome=&#34;context-java.naming.factory.url.pkgs&#34; valore=&#34;org.jnp.interfaces&#34; /&#62;"/>
+				</antcall>
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- CONTEXT_JMS_PROVIDER_URL --&#62;"/>
+					<param name="value" value="&#60;property nome=&#34;context-java.naming.provider.url&#34; valore=&#34;127.0.0.1&#34; /&#62;"/>
+				</antcall>
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- JMS_CONNECTION_FACTORY --&#62;"/>
+					<param name="value" value="&#60;property nome=&#34;connection-factory&#34; valore=&#34;ConnectionFactory&#34; /&#62;"/>
+				</antcall>
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- JMS_USERNAME --&#62;"/>
+					<param name="value" value=""/>
+				</antcall>
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- JMS_PASSWORD --&#62;"/>
+					<param name="value" value=""/>
+				</antcall>
+			</then>
+		</if>
+		
+		<if>
+			<or>
+				<equals arg1="${as}" arg2="jboss7"/>
+				<matches string="${as}" pattern="wildfly.*"/>
+			</or>
+			<then>			
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- CONTEXT_JMS_FACTORY --&#62;"/>
+					<!-- 
+					<param name="value" value="&#60;property nome=&#34;context-java.naming.factory.initial&#34; valore=&#34;org.jboss.naming.remote.client.InitialContextFactory&#34; /&#62;"/>
+					-->
+					<param name="value" value=""/>
+				</antcall>
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- CONTEXT_JMS_PKGS --&#62;"/>
+					<param name="value" value=""/>
+				</antcall>
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- CONTEXT_JMS_PROVIDER_URL --&#62;"/>
+					<!--
+					<param name="value" value="&#60;property nome=&#34;context-java.naming.provider.url&#34; valore=&#34;remote://127.0.0.1:4447&#34; /&#62;"/>
+					-->
+					<param name="value" value=""/>
+				</antcall>
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- JMS_CONNECTION_FACTORY --&#62;"/>
+					<!--
+					<param name="value" value="&#60;property nome=&#34;connection-factory&#34; valore=&#34;jms/RemoteConnectionFactory&#34; /&#62;"/>
+					-->
+					<param name="value" value="&#60;property nome=&#34;connection-factory&#34; valore=&#34;ConnectionFactory&#34; /&#62;"/>
+				</antcall>
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- JMS_USERNAME --&#62;"/>
+					<param name="value" value="&#60;property nome=&#34;user&#34; valore=&#34;openspcoop2&#34; /&#62;"/>
+				</antcall>
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- JMS_PASSWORD --&#62;"/>
+					<param name="value" value="&#60;property nome=&#34;password&#34; valore=&#34;op3n.spc00p&#34; /&#62;"/>
+				</antcall>
+			</then>
+		</if>
+		
+		<if>
+			<or>
+				<matches string="${as}" pattern="tomcat.*"/>
+			</or>
+			<then>			
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- tomcatDatasource"/>
+					<param name="value" value="&#60;!-- tomcatDatasource --&#62;"/>
+				</antcall>
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="fineTomcatDatasource --&#62;"/>
+					<param name="value" value="&#60;!-- fineTomcatDatasource --&#62;"/>
+				</antcall>
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- jbossDatasource --&#62;"/>
+					<param name="value" value="&#60;!-- jbossDatasource"/>
+				</antcall>
+				<antcall target="replace_token">
+				    <param name="file" value="${build_testunits}/config.xml"/>
+					<param name="token" value="&#60;!-- fineJbossDatasource --&#62;"/>
+					<param name="value" value="fineJbossDatasource --&#62;"/>
+				</antcall>
+			</then>
+		</if>
+		
+	</target>
+
+
+	
+	
+</project>
