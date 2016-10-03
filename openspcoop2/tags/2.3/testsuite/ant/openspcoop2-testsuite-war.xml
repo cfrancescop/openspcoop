@@ -1,0 +1,163 @@
+<project name="openspcoop2-build-testsuite">
+    <description>
+        Produzione del war della Testsuite
+    </description>
+	
+	<!-- estensione di ant (if .... ) -->
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+          <classpath>
+              <pathelement location="${required_lib}/ant/ant-contrib-1.0b3.jar"/>
+          </classpath>
+	</taskdef>
+	
+	<import file="${openspcoop2}/ant/commons/utils.xml" />
+	
+
+	<!-- Compilazione della libreria 'org.openspcoop.web.ctrlstat.*' -->
+	<target name="war_openspcoop2_testsuite">
+		
+		<!-- DataSource Properties -->
+		<copy file="${cfg_testsuite}/database.properties" todir="${build_testsuite}/tmp" />
+		<if>
+			<matches string="${as}" pattern="tomcat.*"/>
+			<then>
+				<antcall target="set_property">
+				    <param name="file" value="${build_testsuite}/tmp/database.properties"/>
+					<param name="token" value="org.openspcoop2.datasource.tracciamento.erogatore"/>
+					<param name="value" value="java:/comp/env/org.openspcoop2.dataSource.tracciamento"/>
+				</antcall>
+				<antcall target="set_property">
+				    <param name="file" value="${build_testsuite}/tmp/database.properties"/>
+					<param name="token" value="org.openspcoop2.datasource.tracciamento.fruitore"/>
+					<param name="value" value="java:/comp/env/org.openspcoop2.dataSource.tracciamento"/>
+				</antcall>
+				<antcall target="set_property">
+				    <param name="file" value="${build_testsuite}/tmp/database.properties"/>
+					<param name="token" value="org.openspcoop2.datasource.openspcoop.erogatore"/>
+					<param name="value" value="java:/comp/env/org.openspcoop2.dataSource"/>
+				</antcall>
+				<antcall target="set_property">
+				    <param name="file" value="${build_testsuite}/tmp/database.properties"/>
+					<param name="token" value="org.openspcoop2.datasource.openspcoop.fruitore"/>
+					<param name="value" value="java:/comp/env/org.openspcoop2.dataSource.tracciamento"/>
+				</antcall>
+			</then>
+		</if>
+		
+		<!-- Testsuite Properties -->
+		<copy file="${cfg_testsuite}/testsuite.properties" todir="${build_testsuite}/tmp" />
+		<if>
+			<or>
+				<equals arg1="${as}" arg2="jboss7"/>
+				<matches string="${as}" pattern="wildfly.*"/>
+			</or>
+			<then>
+				<antcall target="set_property">
+				    <param name="file" value="${build_testsuite}/tmp/testsuite.properties"/>
+					<param name="token" value="org.openspcoop2.testsuite.server.mailcap.load"/>
+					<param name="value" value="true"/>
+				</antcall>
+			</then>
+		</if>
+
+		<!-- jboss-deployment-structure -->
+		<if>
+			<equals arg1="${as}" arg2="jboss7"/>
+			<then>
+				<copy file="${src_testsuite}/WEB-INF/jboss-deployment-structure.xml.${as}" tofile="${build_testsuite}/tmp/jboss-deployment-structure.xml" />
+			</then>
+		</if>
+		<if>
+			<matches string="${as}" pattern="wildfly.*"/>
+			<then>
+				<copy file="${src_testsuite}/WEB-INF/jboss-deployment-structure.xml.wildfly" tofile="${build_testsuite}/tmp/jboss-deployment-structure.xml" />
+			</then>
+		</if>
+
+		
+		<war destfile="${dist_testsuite}/OpenSPCoop2TestSuite.war" webxml="${src_testsuite}/WEB-INF/web.xml">
+
+			<!-- Informazioni sulla versione -->
+			<fileset dir="${openspcoop2}">
+				<include name="README.txt" />
+				<include name="COPYING" />
+			</fileset>
+
+			<webinf dir="${src_testsuite}/WEB-INF">
+				<include name="${jboss_classloading}" />
+				<include name="${jboss_scanning}" />
+			</webinf>
+			<webinf dir="${build_testsuite}/tmp">
+				<include name="${jboss_deployment_structure}" />
+			</webinf>
+			
+			<lib dir="${dist_testsuite}">
+				<include name="openspcoop2*.jar"/>
+			</lib>
+			<lib dir="${openspcoop2}/core/dist">
+				<include name="openspcoop2*.jar"/>
+			</lib>
+			<lib dir="${openspcoop2}/tools/web_interfaces/control_station/dist">
+				<include name="openspcoop2*.jar"/>
+			</lib>
+			<lib dir="${required_lib}/axis14">
+				<include name="axis-1.4.jar"/>
+				<include name="axis-saaj-1.4.jar"/>
+				<include name="axis-jaxrpc-1.4.jar"/>
+				<include name="wss4j-1.5.11.jar"/>
+				<include name="opensaml-1.1b.jar"/>
+				<include name="xmlsec-1.4.4.jar"/>
+			</lib>
+			<lib dir="${required_lib}/shared">
+				<include name="wsdl4j-1.6.3.jar"/>
+				<include name="activation-1.1.1.jar"/>
+				<include name="mailapi-1.5.6.jar"/>
+				<include name="addressing-1.1.jar"/>
+				<include name="${xalan_jar}"/>
+				<include name="${xalan_serializer_jar}"/>
+			</lib>
+			<lib dir="${required_lib}/jibx">
+				<include name="jibx-run-1.2.6.jar"/>
+			</lib>
+			<lib dir="${required_lib}/commons">
+				<include name="commons-codec-1.10.jar"/>
+				<include name="commons-discovery-0.5.jar"/>
+				<include name="commons-io-2.5.jar"/>
+				<include name="commons-lang-2.6.jar"/>
+				<include name="commons-collections-3.2.2.jar"/>
+				<include name="${commons_logging_jar}"/>
+			</lib>
+			<lib dir="${required_lib}/security">
+				<include name="bcprov-ext-jdk15on-155.jar"/>
+			</lib>
+			<lib dir="${required_lib}/saaj">
+				<include name="*.jar"/>
+			</lib>
+			<lib dir="${required_lib}/jax">
+				<include name="${jaxp_ri_jar}" />
+			</lib>
+			<lib dir="${required_lib}/log">
+				<include name="slf4j-api-1.7.21.jar"/>
+				<include name="log4j*.jar"/>
+			</lib>
+			<lib dir="${required_lib}/javax">
+				<include name="${javax_jms_jar}"/>
+			</lib>
+			<lib dir="${required_lib}/stub/axis14">
+				<include name="openspcoop2_integrationManagerStub_axis14.jar"/>
+			</lib>
+			<classes dir="${cfg_testsuite}">
+				<include name="testsuite.log4j2.properties"/>
+				<include name="testsuiteServer-crypto.properties"/>
+				<include name="log4j2.properties"/>
+			</classes>
+			<classes dir="${build_testsuite}/tmp">
+				<include name="database.properties"/>
+				<include name="testsuite.properties"/>
+			</classes>
+		</war>
+		<delete dir="${build_testsuite}/tmp" />
+		
+	</target>
+	
+</project>
