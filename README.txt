@@ -1,5 +1,5 @@
 Questa distribuzione contiene la versione binaria della Porta di Dominio
-OpenSPCoop v2, versione 2.3 (rilasciata in data 4 Ottobre 2016). 
+OpenSPCoop v2, versione @VERSIONE@ (rilasciata in data @DATA@). 
 
 Il software e' distribuito con licenza GPLv3, vedi file COPYING. Per 
 informazioni sull'installazione e sull'uso del prodotto consultare 
