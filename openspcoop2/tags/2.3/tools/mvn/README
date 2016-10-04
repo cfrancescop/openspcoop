@@ -1,0 +1,18 @@
+# Prerequisito: 
+cd tools/web_generic_project; ant clean build
+cd tools/web_generic_project/impl/jsf1/; ant clean build
+
+# Istruzione per utilizzare l'installer dei JAR Openspcoop2
+
+Lo script prende come parametro un boolean opzionale che indica se bisogna fare l'installazione SNAPSHOT oppure RELEASE.
+
+ATTENZIONE: Eseguire l'installazione in modalita' release incrementa il Minor Version e tutte le installazioni SNAPSHOT successive saranno relative al nuovo valore di Minor Version.
+
+Installazione dei jar in modalita' SNAPSHOT:
+
+sh openspcoop2_jars_installer.sh [true]
+
+Installazione dei jar in modalita' RELEASE:
+
+sh openspcoop2_jars_installer.sh false
+

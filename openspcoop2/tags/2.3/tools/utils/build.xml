@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="OpenSPCoop2Utils" default="build" basedir=".">
+
+	<description>
+        	Ambiente di compilazione del Progetto OpenSPCoop2Utils
+	</description>
+
+	<import file="./local_env.xml" />
+	<import file="./ant/openspcoop2-utils-build.xml" />
+
+
+	<!-- estensione di ant (if .... ) -->
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+	<classpath>
+			<pathelement location="${required_lib}/ant/ant-contrib-1.0b3.jar"/>
+		</classpath>
+	</taskdef>
+
+	<!-- directory root -->
+	<property name="svn_rootDir" location="${openspcoop2}" />
+	
+	<property name="src_utils" location="src" />
+	<property name="build_utils" location="build" />
+	<property name="dist_utils" location="dist" />
+	<property name="doc_utils" location="doc" />
+
+
+	<!-- CLASSPATH -->
+	<path id="classpath_compile" >
+		<fileset dir="${required_lib}" >
+			<exclude name="**/axis14/*"/>
+			<exclude name="**/javax/javax.sql.jar"/>
+			<exclude name="**/applicationServer/**/*.jar"/>
+			<exclude name="**/*README"/>
+			<exclude name="openspcoop2.userlibraries"/>
+		</fileset>
+	</path>
+	<path id="classpath_dist" >
+	</path>	
+
+	<!-- Ripulisce la distribuzione -->
+	<target name="clean_utils">
+		<delete dir="${build_utils}" />
+		<delete dir="build" />
+		<delete dir="${dist_utils}" />
+		<delete dir="${doc_utils}" />
+	</target>
+
+	<!-- Create the build directory structure used by compile -->
+	<target name="init_compile_utils">
+		<mkdir dir="${build_utils}" />
+		<mkdir dir="${build_utils}/tmp" />
+		<mkdir dir="${dist_utils}" />
+	</target>
+	
+	
+	
+	
+	<!-- Compilazione della PddConsole-->
+	<target name="compile_utils" depends="init_compile_utils,compile_openspcoop2_utils" />
+	
+	<!-- alias -->
+	<target name="build" depends="compile_utils"/>
+	<target name="build_openspcoop2_utils_jar" depends="compile_openspcoop2_utils"/>
+	<target name="clean" depends="clean_utils"/>
+	
+	
+	
+	<!-- Creazione del modulo WAR per il test dei datasource -->
+	<target name="warTestDS" depends="clean,build" description="Crea la struttura del modulo WAR per l'esempio del package datasource">
+		<war destfile="${dist_utils}/ExampleDS.war" webxml="${src_utils}/org/openspcoop2/utils/datasource/test/web.xml">
+			<classes dir="${src_utils}/org/openspcoop2/utils/datasource/test">
+				<include name="*.properties"/>
+			</classes>
+			<lib dir="${dist_utils}">
+				<include name="openspcoop2_utils_*.jar"/>
+			</lib>
+			<!--
+			<lib dir="${required_lib}/cxf">
+				<include name="*.jar"/>
+			</lib>
+			<lib dir="${required_lib}/saaj">
+				<include name="*.jar"/>
+			</lib>
+			-->
+		</war>
+	</target>
+	
+	<!-- Creazione del modulo WAR per il test della cache -->
+	<target name="warTestCache" depends="clean,build" description="Crea la struttura del modulo WAR per l'esempio del package cache">
+		<war destfile="${dist_utils}/ExampleCache.war" webxml="${src_utils}/org/openspcoop2/utils/cache/test/web.xml">
+			<classes dir="${src_utils}/org/openspcoop2/utils/cache/test">
+				<include name="*.ccf"/>
+			</classes>
+			<lib dir="${dist_utils}">
+				<include name="openspcoop2_utils_*.jar"/>
+			</lib>
+			<lib dir="${required_lib}/shared">
+				<include name="jcs-1.3.jar"/>
+				<include name="concurrent-1.0.jar"/>
+			</lib>
+		</war>
+	</target>
+	
+	
+	<!-- Test -->
+	<path id="classpath_run_dist" >
+		<fileset dir="${dist_utils}" >
+			<include name="*.jar"/>
+		</fileset>
+		<fileset dir="${ext_lib}" >
+			<include name="*.jar"/>
+		</fileset>
+		<fileset dir="${required_lib}/log" >
+			<include name="*.jar"/>
+		</fileset>
+	</path>	
+		
+	<target name="runKeyGeneratorTest">
+		<if>
+			<equals arg1="${tipoDatabase}" arg2="$${tipoDatabase}"/>
+			<then>
+				<fail message="Parametro tipoDatabase non fornito"/>
+			</then>
+		</if>
+        <!-- Run the java code  -->
+        <java classname="org.openspcoop2.utils.jdbc.TestKeyGenerator" fork="true">
+                <arg value="${tipoDatabase}" />
+        		<arg value="${url}" /> <!-- opzionale -->
+        		<arg value="${username}" /> <!-- opzionale -->
+        		<arg value="${password}" /> <!-- opzionale -->
+                <classpath>
+                		<path refid="classpath_run_dist" />
+                </classpath>
+        </java>
+	</target>
+	
+	<target name="runJDBCAdapterTest">
+		<if>
+			<equals arg1="${tipoDatabase}" arg2="$${tipoDatabase}"/>
+			<then>
+				<fail message="Parametro tipoDatabase non fornito"/>
+			</then>
+		</if>
+        <!-- Run the java code  -->
+        <java classname="org.openspcoop2.utils.jdbc.TestJDBCAdapter" fork="true">
+                <arg value="${tipoDatabase}" />
+        		<arg value="${url}" /> <!-- opzionale -->
+        		<arg value="${username}" /> <!-- opzionale -->
+        		<arg value="${password}" /> <!-- opzionale -->
+                <classpath>
+                		<path refid="classpath_run_dist" />
+                </classpath>
+        </java>
+	</target>
+	
+	<target name="runSQLQueryObjectTest">
+		<if>
+			<equals arg1="${tipoDatabase}" arg2="$${tipoDatabase}"/>
+			<then>
+				<fail message="Parametro tipoDatabase non fornito"/>
+			</then>
+		</if>
+        <!-- Run the java code  -->
+        <java classname="org.openspcoop2.utils.sql.ClientTest" fork="true">
+                <arg value="${tipoDatabase}" />
+        		<arg value="${url}" /> <!-- opzionale -->
+        		<arg value="${username}" /> <!-- opzionale -->
+        		<arg value="${password}" /> <!-- opzionale -->
+                <classpath>
+                		<path refid="classpath_run_dist" />
+                </classpath>
+        </java>
+	</target>
+	
+	<target name="runIdSerialTest">
+		<if>
+			<equals arg1="${tipoDatabase}" arg2="$${tipoDatabase}"/>
+			<then>
+				<fail message="Parametro tipoDatabase non fornito"/>
+			</then>
+		</if>
+        <!-- Run the java code  -->
+        <java classname="org.openspcoop2.utils.id.serial.ClientTest" fork="true">
+                <arg value="${tipoDatabase}" />
+        		<arg value="${url}" /> <!-- opzionale -->
+        		<arg value="${username}" /> <!-- opzionale -->
+        		<arg value="${password}" /> <!-- opzionale -->
+        		<arg value="${threads}" /> <!-- opzionale -->
+        		<arg value="${idsForThread}" /> <!-- opzionale -->
+        		<arg value="${printDebug}" /> <!-- opzionale -->
+        		<arg value="${timeWaitMs}" /> <!-- opzionale -->
+        		<arg value="${sizeBuffer}" /> <!-- opzionale -->
+                <classpath>
+                		<path refid="classpath_run_dist" />
+                </classpath>
+        </java>
+	</target>
+	
+</project>
